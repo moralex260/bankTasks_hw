@@ -1,0 +1,153 @@
+SHOW DATABASES;
+use bank;
+SHOW TABLES;
+describe client;
+select * from client;
+SELECT *, LENGTH(FirstName) as length FROM client WHERE LENGTH(FirstName)=6;
+describe department;
+select * from department;
+describe application;
+select * from application;
+select * from department where DepartmentCity like 'Lviv';
+select * from client where Education='high' order by LastName  ;
+select * from application order by idApplication desc ;
+select * from client where LastName like '%OV' or '%OVA';
+select * from client join department d on
+    client.Department_idDepartment = d.idDepartment where DepartmentCity like 'Kyiv';
+select FirstName ,Passport from client  group by FirstName ;
+select * from client  join application a on client.idClient = a.Client_idClient where Sum>5000
+                                                            and CreditState = 'Not returned';
+select  count(idClient)  from client join department d on
+    client.Department_idDepartment = d.idDepartment where DepartmentCity like 'Lviv';
+select count(*) from client ;
+SELECT FirstName,LastName,max(Sum ) FROM client join
+    application a on client.idClient = a.Client_idClient group by FirstName;
+select FirstName,LastName,Sum from client join application a on client.idClient = a.Client_idClient;
+
+   select count(LastName) as count,LastName,FirstName from client join application a on client.idClient = a.Client_idClient
+group by LastName ;
+select LastName,max(Sum) ,min(Sum) from client join application a on client.idClient = a.Client_idClient group by LastName;
+select max(Sum)  from client join application a on client.idClient = a.Client_idClient ;
+select  min(Sum) from client join application a on client.idClient = a.Client_idClient;
+select  count(Sum ) from client join application a on client.idClient = a.Client_idClient where Education='high';
+
+
+
+
+/*select q.idDepartment, q.DepartmentCity, q.FirstName, q.LastName, q.maxSum, q.rank
+from (select d.idDepartment, d.DepartmentCity, c.FirstName, c.LastName, max(a.Sum) as maxSum,
+             DENSE_RANK() OVER(partition by d.idDepartment, d.idDepartment, d.DepartmentCity order by max(a.Sum) desc) as 'rank'
+      from Client c inner join Department d on d.idDepartment = c.idDepartment
+                    inner join Application a on a.Client_idClient = c.idClient
+      group by d.idDepartment, d.DepartmentCity, c.FirstName, c.LastName
+     ) q
+where  q.rank = 1;
+*/
+/* 14*/
+select * , avg(Sum) as maxsum  from client     join
+    application a on client.idClient = a.Client_idClient
+group by LastName
+ order by  maxsum desc LIMIT 0, 1;
+
+/*15. Вивести відділення, яке видало в кредити найбільше грошей*/
+select idDepartment,Department_idDepartment,DepartmentCity ,Sum(Sum) from client left join department d on client.Department_idDepartment = d.idDepartment
+right join application a on client.idClient = a.Client_idClient group by Department_idDepartment order by Sum(Sum) desc limit 0,1;
+
+/*16. Вивести відділення, яке видало найбільший кредит.*/
+select idDepartment,Department_idDepartment,DepartmentCity ,max(Sum) from client
+    left join department d on client.Department_idDepartment = d.idDepartment
+    right join application a on client.idClient = a.Client_idClient
+    group by Department_idDepartment
+     order by max(Sum) desc limit 0,1;
+
+/*17. Усім клієнтам, які мають вищу освіту, встановити усі їхні кредити у розмірі 6000 грн.*/
+UPDATE client join application a on client.idClient = a.Client_idClient SET Sum=6000 where Education='high';
+
+
+
+
+    select LastName,Sum from client
+    join application a on client.idClient = a.Client_idClient
+    where Education='high'
+    group by LastName,Sum ;
+select LastName,Sum from  client join application a on client.idClient = a.Client_idClient;
+
+/*18. Усіх клієнтів київських відділень пересилити до Києва.*/
+
+UPDATE client join department d on client.Department_idDepartment = d.idDepartment SET City='Kyiv' where DepartmentCity='Kyiv';
+
+select * from client join department d on client.Department_idDepartment = d.idDepartment;
+
+
+
+/*19. Видалити усі кредити, які є повернені.*/
+delete  from application where CreditState='Returned';
+select* from application ;
+
+/*20. Видалити кредити клієнтів, в яких друга літера прізвища є голосною.*/
+
+select LastName ,Sum from application  join client c on application.Client_idClient = c.idClient
+where (LastName like '_o%'
+or LastName like '_a%'
+or LastName like '_e%'
+or LastName like '_u%'
+or LastName like '_i%');
+
+DELETE application from application
+
+JOIN client c on application.Client_idClient = c.idClient
+
+   where
+ (LastName like '%_o%'
+    or LastName like '_a%'
+    or LastName like '_e%'
+    or LastName like '_u%'
+    or LastName like '_i%');
+
+/*Знайти львівські відділення, які видали кредитів на загальну суму більше ніж 5000*/
+
+select  idDepartment,DepartmentCity ,Sum from client
+   join department d on client.Department_idDepartment = d.idDepartment
+   join application a on client.idClient = a.Client_idClient where DepartmentCity='Lviv'  group by  Department_idDepartment,Sum
+having Sum(Sum)>5000
+;
+
+select * from client right join application a on client.idClient = a.Client_idClient
+ left join department d on client.Department_idDepartment = d.idDepartment;
+
+/*Знайти клієнтів, які повністю погасили кредити на суму більше ніж 5000*/
+
+select LastName,idClient from client join application a on client.idClient = a.Client_idClient where CreditState='returned' and Sum>5000;
+
+/* Знайти максимальний неповернений кредит.*/
+select LastName, max(Sum) from application join client c on application.Client_idClient = c.idClient where CreditState='Not returned'
+group by idApplication
+order by max(Sum) desc limit 0,1 ;
+
+/*Знайти клієнта, сума кредиту якого найменша*/
+select LastName,min(Sum)  from application join client c on application.Client_idClient = c.idClient group by idApplication
+order by min(Sum) limit 0,1;
+/*Знайти кредити, сума яких більша за середнє значення усіх кредитів*/
+
+SELECT LastName,Sum
+FROM client join application a on client.idClient = a.Client_idClient
+WHERE Sum>(SELECT Avg(Sum)  FROM application)  ;
+
+
+/*Знайти клієнтів, які є з того самого міста, що і клієнт, який взяв найбільшу кількість кредитів*/
+select LastName,DepartmentCity from client
+    join department d on client.Department_idDepartment = d.idDepartment
+join application a on client.idClient = a.Client_idClient where DepartmentCity=
+   (select DepartmentCity from client
+    right join application a on client.idClient = a.Client_idClient
+    left join department d on client.Department_idDepartment = d.idDepartment
+    group by  DepartmentCity
+    order by count(Sum)
+        desc limit 0,1);
+/*#місто чувака який набрав найбільше кредитів*/
+    select DepartmentCity,LastName, count(Sum),Sum(Sum) from client
+        right join application a on client.idClient = a.Client_idClient
+        left join department d on client.Department_idDepartment = d.idDepartment
+    group by  DepartmentCity
+    order by count(Sum)
+    desc limit 0,1;
